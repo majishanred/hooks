@@ -1,4 +1,4 @@
-import {ReactElement, useEffect, useMemo, useState} from "react";
+import {ReactElement, ReactNode, useEffect, useMemo, useState} from "react";
 
 type MediaQueryProps = {
     orientation?: 'landscape' | 'portrait';
@@ -8,7 +8,7 @@ type MediaQueryProps = {
     maxWidth?: `${number}ddpx` | number
     minHeight?: `${number}ddpx` | number
     maxHeight?: `${number}ddpx` | number,
-    children: ((matches: boolean) => ReactElement);
+    children: ((matches: boolean) => ReactElement) | ReactNode;
 }
 
 export const MediaQuery = (props: MediaQueryProps) => {
@@ -38,7 +38,5 @@ export const MediaQuery = (props: MediaQueryProps) => {
         return () => mediaQuery.removeEventListener('change', eventListener);
     }, [mediaQuery]);
 
-    console.log(props.children);
-
-    return props.children(matches)
+    return props.children instanceof Function ? props.children(matches) : <>{props.children}</>
 };

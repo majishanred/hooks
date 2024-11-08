@@ -1,34 +1,41 @@
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 
 export const useDocumentVisibility = () => {
     const [count, setCount] = useState(0);
-
     const [isVisible, setIsVisible] = useState(() => document.visibilityState === 'visible');
 
-    const onVisibleChange = useCallback((callback: (isVisible: boolean) => void) => {
-        let callbackSubscription: ((isVisible: boolean) => void) | null  = callback;
+    const callbackRef = useRef<((isVisible: boolean) => void)[]>([]);
 
-        callbackSubscription(isVisible);
+    const onVisibilityChange = (callback: (isVisible: boolean) => void) => {
+        callbackRef.current.push(callback);
 
-        return () => { callbackSubscription = null };
-    }, [isVisible]);
+        return () => {
+            callbackRef.current = callbackRef.current.filter((func) => func !== callback);
+        };
+    };
+
+    const eventListener = useCallback(() => {
+            if(document.visibilityState === 'hidden') {
+                setIsVisible(false);
+                setCount(count => count + 1);
+            } else {
+                setIsVisible(true);
+            }
+    }, []);
 
     useEffect(() => {
-        // document.addEventListener('visibilitychange', () => {
-        //     if(document.visibilityState === 'hidden') {
-        //         setIsVisible(false);
-        //         setCount(count => count + 1);
-        //     } else {
-        //         setIsVisible(true);
-        //     }
-        // });
+        document.addEventListener('visibilitychange', eventListener);
+
+        return () => document.removeEventListener('visibilitychange', eventListener);
     }, []);
 
-    return useMemo(() => {
-        return {
-            count: count,
-            visible: isVisible,
-            onVisibilityChange: onVisibleChange,
-        }
-    }, []);
+    useEffect(() => {
+        callbackRef.current.forEach((func) => func(isVisible));
+    }, [isVisible]);
+
+    return {
+        count,
+        isVisible,
+        onVisibilityChange
+    }
 };

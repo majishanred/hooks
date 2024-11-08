@@ -1,27 +1,35 @@
 import './App.css'
-import {MediaQuery} from "./components/MediaQuery.tsx";
-import {useMediaQuery} from "./hooks/useMediaQuery.tsx";
+import {useDocumentVisibility} from "./hooks/useDocumentVisibility.ts";
+import {useEffect} from "react";
 
 const TestComponent = () => {
-    const matchesPortrait = useMediaQuery({
-        query: '(max-width: 1200px)'
-    });
+    const { count, isVisible, onVisibilityChange } = useDocumentVisibility();
 
-    return <>
-    { matchesPortrait && <div>I'm portrait orientation</div> }
-    </>
+    useEffect(() => {
+        onVisibilityChange((isVisible) => {
+            console.log('first handler', isVisible)
+        });
+
+        const unsubscribeSecondHandler = onVisibilityChange((isVisible) => {
+            console.log('second handler', isVisible);
+        });
+
+        setTimeout(() => unsubscribeSecondHandler(), 5000); // отписываемся от 'second handler' через 5 секунд
+    }, [])
+
+    return (
+        <div>
+      <span>
+        Вы покинули страницу: {count} раз
+        Вкладка активна? {isVisible ? 'да' : 'нет'}
+      </span>
+        </div>
+    );
 };
 
 function App() {
   return (
     <>
-        <MediaQuery minWidth={1800}>
-            {(matches) =>
-                matches
-                    ? <p>You are retina</p>
-                    : <p>You are not retina</p>
-            }
-        </MediaQuery>
         <TestComponent />
     </>
   )
